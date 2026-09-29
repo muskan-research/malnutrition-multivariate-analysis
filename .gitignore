@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.DS_Store
+.ipynb_checkpoints/
+
+# Local data and generated outputs
+*.xlsx
+*.xls
+*.sav
+*.dta
+*.rds
+*.pkl
+*.pickle
