@@ -20,6 +20,9 @@ jobs:
       - name: Run main analysis
         run: python -m scripts.run_main_analysis data/example_synthetic.csv
 
+      - name: Run trajectory analysis
+        run: python -m scripts.run_trajectory_analysis data/example_synthetic.csv
+
       - name: Run structure analysis
         run: python -m scripts.run_structure_analysis data/example_synthetic.csv
 
