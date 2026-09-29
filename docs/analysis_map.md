@@ -1,25 +1,60 @@
 # Analysis map
 
+The repository is organised into reusable functions in `src/` and executable analyses in `scripts/`.
+
 ## Primary analysis
 
-`run_main_analysis.py` implements the covariance pattern-matching score using the reference and malnourished covariance structures and evaluates the score with ROC/AUC, Youden's J, sensitivity, specificity, precision, and the confusion matrix.
+`scripts/run_main_analysis.py` runs the covariance pattern-matching analysis. It estimates reference and malnourished covariance structures and evaluates the resulting continuous score using ROC/AUC, Youden's J, sensitivity, specificity, precision, and a confusion matrix.
+
+Core calculations are implemented in `src/covariance_model.py`.
 
 ## Covariance structure
 
-`run_structure_analysis.py` decomposes the covariance matrices into eigenvalues/eigenvectors and summarizes the lowest- and highest-variance axes.
+`scripts/run_structure_analysis.py` uses `src/structure.py` to decompose group covariance matrices into eigenvalues and eigenvectors and summarise low- and high-variance axes.
 
-## Reference-structure probability analysis
+## Reference-structure probability
 
-`run_reference_probability.py` projects observations into the reference covariance eigenbasis and computes axis-wise and global probabilities under the reference covariance model.
+`scripts/run_reference_probability.py` uses `src/reference_probability.py` to project observations into the reference covariance eigenbasis and calculate axis-wise and global probabilities under the reference covariance model.
 
-## Sensitivity analyses
+## Ordinal SGA analysis
 
-`run_clinical_midpoint_sensitivity.py` compares distances from the reference-group centre with distances from a clinical reference-range midpoint.
+`scripts/run_ordinal_analysis.py` relates the continuous model score to ordinal SGA categories using Spearman correlation and the Kruskal–Wallis test.
 
-`run_ordinal_analysis.py` tests the association between the continuous model score and ordinal SGA category.
+## Sensitivity analysis
 
-`run_permutation_tests.py` tests whether the observed difference in within-group multivariate pairwise distance is unusual under permutation of group labels.
+`scripts/run_clinical_midpoint_sensitivity.py` compares distances from the reference-group centre with distances from clinical reference-range midpoints. Sex-specific ranges are handled by the midpoint function in `src/config.py`.
+
+## Permutation analysis
+
+`scripts/run_permutation_tests.py` tests whether the observed difference in mean within-group multivariate pairwise distance is unusual under permutation of group labels.
 
 ## Figures
 
-`make_figures.py` generates the two main figures used to communicate multivariate distance and covariance-eigenvalue structure.
+`scripts/make_figures.py` generates figures for multivariate distance from the reference-group centre and covariance eigenvalue structure.
+
+## Data flow
+
+```text
+Private clinical dataset
+        |
+        v
+src/data.py
+  numeric coercion
+  median imputation
+  standardisation
+        |
+        +----------------------+
+        |                      |
+        v                      v
+src/covariance_model.py   src/structure.py
+        |                      |
+        v                      v
+model score / ROC        eigenstructure
+        |
+        +----------------------+
+        |
+        v
+additional sensitivity,
+ordinal, probability,
+and permutation analyses
+```
