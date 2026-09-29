@@ -17,7 +17,10 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run main analysis
+      - name: Run drift analysis
+        run: python -m scripts.run_drift_analysis data/example_synthetic.csv
+
+      - name: Run main covariance analysis
         run: python -m scripts.run_main_analysis data/example_synthetic.csv
 
       - name: Run trajectory analysis
