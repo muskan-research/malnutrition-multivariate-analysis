@@ -8,7 +8,9 @@ The repository contains the cleaned analytical code and documentation. The origi
 
 The project examines malnutrition as a multivariate physiological state. The analysis focuses on:
 
-- distance from a reference physiological state;
+- magnitude of multivariate drift from a nutritional reference state;
+- Euclidean within-group dispersion;
+- directional trajectories between SGA-defined states;
 - differences in covariance structure between reference and malnourished groups;
 - changes in low- and high-variance directions of the biomarker space;
 - deviation from the reference covariance structure; and
@@ -28,9 +30,11 @@ The approach is exploratory and research-oriented. It is **not a clinical diagno
 │   ├── covariance_model.py
 │   ├── reference_probability.py
 │   ├── statistics.py
-│   └── structure.py
+│   ├── structure.py
+│   └── trajectory.py
 ├── scripts/
 │   ├── run_main_analysis.py
+│   ├── run_trajectory_analysis.py
 │   ├── run_structure_analysis.py
 │   ├── run_reference_probability.py
 │   ├── run_ordinal_analysis.py
@@ -87,6 +91,7 @@ From the repository root:
 
 ```bash
 python -m scripts.run_main_analysis /path/to/private_dataset.xlsx
+python -m scripts.run_trajectory_analysis /path/to/private_dataset.xlsx
 python -m scripts.run_structure_analysis /path/to/private_dataset.xlsx
 python -m scripts.run_reference_probability /path/to/private_dataset.xlsx
 python -m scripts.run_ordinal_analysis /path/to/private_dataset.xlsx
@@ -95,9 +100,17 @@ python -m scripts.run_permutation_tests /path/to/private_dataset.xlsx
 python -m scripts.make_figures /path/to/private_dataset.xlsx
 ```
 
+For the trajectory analysis, the input must contain the ordinal SGA column (`SGA_ordinal` by default) with A, B, and C groups.
+
 Each script accepts command-line arguments for label columns and output locations where applicable.
 
 ## Analytical components
+
+**Multivariate drift**  
+Calculates Euclidean distance from the SGA-A reference centroid and pairwise Euclidean distances within nutritional groups. These measures describe the magnitude of multivariate displacement and within-group dispersion.
+
+**Geometric trajectory analysis**  
+Calculates SGA-A, SGA-B, and SGA-C centroid vectors, the Euclidean length of A→B, B→C, and A→C transitions, and the angular relationship between successive trajectory vectors using cosine similarity. This distinguishes the magnitude of displacement from its direction.
 
 **Covariance pattern matching**  
 Compares observations with the covariance structures estimated for the reference and malnourished groups and evaluates the resulting continuous score using ROC-based measures.
@@ -109,7 +122,7 @@ Examines eigenvalues and eigenvectors to describe differences in the organisatio
 Projects observations into the reference covariance eigenbasis and quantifies deviations along low-variance directions and globally.
 
 **Ordinal analysis**  
-Examines the relationship between the continuous model score and ordinal SGA categories.
+Examines the relationship between the continuous covariance-based model score and ordinal SGA categories.
 
 **Sensitivity analysis**  
 Compares distances from the reference-group centre with distances from clinical reference-range midpoints.
@@ -124,6 +137,8 @@ Further details are provided in [the analysis map](docs/analysis_map.md).
 The repository separates reusable analytical functions in `src/` from executable analysis scripts in `scripts/`.
 
 The current implementation includes exploratory analyses in which preprocessing and model parameters can be estimated from the supplied cohort. Performance estimates from fitting and evaluating on the same cohort can therefore be optimistic. Results from an independent validation cohort should be treated separately from exploratory performance estimates.
+
+The trajectory analysis is cross-sectional: SGA groups are compared through their centroid profiles. It should not be interpreted as longitudinal patient-level trajectory tracking because the dataset does not provide repeated measurements of the same individuals across SGA stages.
 
 Randomized permutation analyses expose their seed and number of permutations as command-line arguments.
 
