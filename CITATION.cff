@@ -1,0 +1,8 @@
+cff-version: 1.2.0
+title: "Multivariate Biomarker Analysis of Malnutrition"
+type: software
+authors:
+  - family-names: Kaushal
+    given-names: Muskan
+abstract: "Python implementation of multivariate analyses of routine clinical biomarkers in relation to disease-related malnutrition."
+repository-code: "https://github.com/muskan-research/malnutrition-multivariate-analysis"

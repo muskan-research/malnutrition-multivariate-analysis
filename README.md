@@ -1,22 +1,21 @@
 # Multivariate Biomarker Analysis of Malnutrition
 
-Python code accompanying a research project investigating whether disease-related malnutrition is associated with changes in the joint structure of routine clinical biomarkers.
+[![Reproducibility check](https://github.com/muskan-research/malnutrition-multivariate-analysis/actions/workflows/reproducibility.yml/badge.svg)](https://github.com/muskan-research/malnutrition-multivariate-analysis/actions/workflows/reproducibility.yml)
 
-The repository contains the cleaned analytical code and documentation. The original patient-level clinical dataset is private and is not included.
+Python implementation of the multivariate analyses developed for a study of disease-related malnutrition using routine clinical biomarkers.
 
-## Research question
+The public repository contains the analysis code, documentation, and a synthetic example dataset. The patient-level clinical data are not included.
 
-The project examines malnutrition as a multivariate physiological state. The analysis focuses on:
+## What the analysis asks
 
-- magnitude of multivariate drift from a nutritional reference state;
-- Euclidean within-group dispersion;
-- directional trajectories between SGA-defined states;
-- differences in covariance structure between reference and malnourished groups;
-- changes in low- and high-variance directions of the biomarker space;
-- deviation from the reference covariance structure; and
-- sensitivity and permutation analyses.
+The project treats nutritional status as a multivariate physiological configuration rather than a collection of isolated biomarker abnormalities.
 
-The approach is exploratory and research-oriented. It is **not a clinical diagnostic tool**.
+The analysis separates four related questions:
+
+1. **Magnitude** — how far is an individual or group from the SGA-A reference state?
+2. **Direction** — do the multivariate changes between SGA A, B, and C point in the same direction?
+3. **Structure** — how do covariance and variance patterns differ between reference and malnourished groups?
+4. **Classification** — how well does the covariance-based score distinguish the two binary SGA groups, and how does it behave in held-out data?
 
 ## Repository structure
 
@@ -24,16 +23,22 @@ The approach is exploratory and research-oriented. It is **not a clinical diagno
 .
 ├── README.md
 ├── requirements.txt
+├── .github/
+│   └── workflows/
+│       └── reproducibility.yml
 ├── src/
 │   ├── config.py
-│   ├── data.py
 │   ├── covariance_model.py
+│   ├── data.py
+│   ├── drift.py
 │   ├── reference_probability.py
 │   ├── statistics.py
 │   ├── structure.py
 │   └── trajectory.py
 ├── scripts/
+│   ├── run_drift_analysis.py
 │   ├── run_main_analysis.py
+│   ├── run_validation_analysis.py
 │   ├── run_trajectory_analysis.py
 │   ├── run_structure_analysis.py
 │   ├── run_reference_probability.py
@@ -46,109 +51,101 @@ The approach is exploratory and research-oriented. It is **not a clinical diagno
 │   └── example_synthetic.csv
 ├── docs/
 │   ├── analysis_map.md
-│   └── publication_notes.md
+│   ├── publication_notes.md
+│   └── validation.md
 └── results/
     └── README.md
 ```
 
-## Data
+## Data and preprocessing
 
-No patient-level clinical data are included.
+The analysis uses a fixed panel of 37 biomarkers defined in `src/config.py`.
 
-The file `data/example_synthetic.csv` is simulated data provided only for demonstration and testing. It should not be interpreted as observations from the clinical cohort.
+For a supplied dataset, the workflow:
 
-For an analysis using the study dataset, provide the private CSV or Excel file locally when running the scripts. The expected biomarker and SGA columns are checked by the data-loading functions.
+1. checks that all required biomarker columns are present;
+2. converts biomarker values to numeric form;
+3. imputes missing biomarker values with the cohort-specific median;
+4. standardises the biomarker matrix with z-scores.
 
-## Setup
+For independent validation, the imputer and scaler are fitted **only in the development cohort** and then applied unchanged to the validation cohort. See [Validation](docs/validation.md).
 
-Python 3.10+ is recommended.
+The public `data/example_synthetic.csv` file is simulated data for software testing and demonstration. It is not clinical data and should not be used for scientific inference.
 
-```bash
-python -m venv .venv
-```
+## Main analyses
 
-Windows:
+### Multivariate drift
 
-```bash
-.venv\Scripts\activate
-```
+The SGA-A centroid is used as the reference state. Euclidean distance quantifies the magnitude of displacement from that reference, while within-group pairwise Euclidean distance describes dispersion.
 
-macOS/Linux:
-
-```bash
-source .venv/bin/activate
-```
-
-Install dependencies:
+Run:
 
 ```bash
-pip install -r requirements.txt
+python -m scripts.run_drift_analysis /path/to/dataset.xlsx
 ```
 
-## Running the analyses
+### Geometric trajectory analysis
 
-From the repository root:
+Centroid profiles are calculated for SGA A, B, and C. Euclidean transition lengths quantify the size of A→B, B→C, and A→C changes. Cosine similarity is used to calculate the angle between successive trajectory vectors.
+
+This is a **cross-sectional centroid analysis**, not longitudinal tracking of individual patients.
+
+Run:
 
 ```bash
-python -m scripts.run_main_analysis /path/to/private_dataset.xlsx
-python -m scripts.run_trajectory_analysis /path/to/private_dataset.xlsx
-python -m scripts.run_structure_analysis /path/to/private_dataset.xlsx
-python -m scripts.run_reference_probability /path/to/private_dataset.xlsx
-python -m scripts.run_ordinal_analysis /path/to/private_dataset.xlsx
-python -m scripts.run_clinical_midpoint_sensitivity /path/to/private_dataset.xlsx
-python -m scripts.run_permutation_tests /path/to/private_dataset.xlsx
-python -m scripts.make_figures /path/to/private_dataset.xlsx
+python -m scripts.run_trajectory_analysis /path/to/dataset.xlsx
 ```
 
-For the trajectory analysis, the input must contain the ordinal SGA column (`SGA_ordinal` by default) with A, B, and C groups.
+### Covariance-based model
 
-Each script accepts command-line arguments for label columns and output locations where applicable.
+The binary covariance model estimates separate covariance structures for the reference and malnourished groups and produces a continuous pattern-matching score. The exploratory threshold is selected with Youden's J.
 
-## Analytical components
+Run:
 
-**Multivariate drift**  
-Calculates Euclidean distance from the SGA-A reference centroid and pairwise Euclidean distances within nutritional groups. These measures describe the magnitude of multivariate displacement and within-group dispersion.
+```bash
+python -m scripts.run_main_analysis /path/to/dataset.xlsx
+```
 
-**Geometric trajectory analysis**  
-Calculates SGA-A, SGA-B, and SGA-C centroid vectors, the Euclidean length of A→B, B→C, and A→C transitions, and the angular relationship between successive trajectory vectors using cosine similarity. This distinguishes the magnitude of displacement from its direction.
+### Held-out validation
 
-**Covariance pattern matching**  
-Compares observations with the covariance structures estimated for the reference and malnourished groups and evaluates the resulting continuous score using ROC-based measures.
+The validation script keeps preprocessing, covariance estimation, and threshold selection in the development cohort. The resulting model and threshold are then applied unchanged to the held-out cohort.
 
-**Covariance eigenstructure**  
-Examines eigenvalues and eigenvectors to describe differences in the organisation and variability of the multivariate biomarker space.
+Run:
 
-**Reference-structure probability**  
-Projects observations into the reference covariance eigenbasis and quantifies deviations along low-variance directions and globally.
+```bash
+python -m scripts.run_validation_analysis \
+    /path/to/development_dataset.xlsx \
+    /path/to/validation_dataset.xlsx
+```
 
-**Ordinal analysis**  
-Examines the relationship between the continuous covariance-based model score and ordinal SGA categories.
+### Covariance structure and reference probability
 
-**Sensitivity analysis**  
-Compares distances from the reference-group centre with distances from clinical reference-range midpoints.
+The remaining modules examine covariance eigenstructure, deviation from the reference covariance model, and the relationship between the continuous score and ordinal SGA categories.
 
-**Permutation analysis**  
-Tests whether the observed difference in within-group multivariate pairwise distance is unusual under permutation of group labels.
+Permutation testing and a clinical-reference-midpoint sensitivity analysis are included as supporting analyses.
 
-Further details are provided in [the analysis map](docs/analysis_map.md).
+See [the analysis map](docs/analysis_map.md) for the full workflow.
 
-## Reproducibility and interpretation
+## Reproducibility
 
-The repository separates reusable analytical functions in `src/` from executable analysis scripts in `scripts/`.
+The repository keeps reusable calculations in `src/` and command-line entry points in `scripts/`.
 
-The current implementation includes exploratory analyses in which preprocessing and model parameters can be estimated from the supplied cohort. Performance estimates from fitting and evaluating on the same cohort can therefore be optimistic. Results from an independent validation cohort should be treated separately from exploratory performance estimates.
+GitHub Actions runs the analysis scripts on the synthetic dataset after each push and pull request. The workflow checks that the code installs cleanly, the modules import correctly, and the principal analyses complete without error.
 
-The trajectory analysis is cross-sectional: SGA groups are compared through their centroid profiles. It should not be interpreted as longitudinal patient-level trajectory tracking because the dataset does not provide repeated measurements of the same individuals across SGA stages.
+Results generated from private clinical data are written locally to `results/`; generated result files are ignored by Git by default.
 
-Randomized permutation analyses expose their seed and number of permutations as command-line arguments.
+## Interpretation
 
-Generated tables and figures are written to `results/`. Patient-level outputs should remain local unless they have been appropriately de-identified and are approved for release.
+Exploratory performance estimates are obtained within the supplied cohort unless the held-out validation workflow is used. Same-cohort performance can be optimistic and should not be interpreted as independent validation.
+
+The code is intended for research use. It is not a clinical diagnostic system.
 
 ## Research status
 
-This repository is a public code release accompanying ongoing research. Manuscript details and a formal citation will be added when finalised.
+This repository accompanies ongoing work arising from an MSc research project in Clinical Nutrition at the University of Tartu. Manuscript and citation information will be added when finalised.
 
 ## Author
 
 **Muskan**  
-MSc Health Sciences (Clinical Nutrition), University of Tartu
+MSc Health Sciences (Clinical Nutrition)  
+University of Tartu
