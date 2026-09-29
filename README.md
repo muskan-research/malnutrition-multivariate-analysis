@@ -142,7 +142,7 @@ The code is intended for research use. It is not a clinical diagnostic system.
 
 ## Research status
 
-This repository accompanies ongoing work arising from an MSc research project in Clinical Nutrition at the University of Tartu. Manuscript and citation information will be added when finalised.
+This repository contains the reproducible analysis code developed as part of an MSc research project in Clinical Nutrition at the University of Tartu. The associated manuscript is currently in preparation.
 
 ## Author
 
