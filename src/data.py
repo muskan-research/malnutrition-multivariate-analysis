@@ -7,7 +7,7 @@ from sklearn.preprocessing import StandardScaler
 
 
 def load_dataset(path):
-    """Load CSV or Excel input."""
+    """Load a CSV or Excel input file."""
     path = Path(path)
     if path.suffix.lower() in {".xlsx", ".xls"}:
         return pd.read_excel(path)
@@ -16,18 +16,37 @@ def load_dataset(path):
     raise ValueError(f"Unsupported file format: {path.suffix}")
 
 
-def prepare_matrix(df, features):
-    """Coerce biomarkers to numeric, impute medians, and standardize."""
-    missing = [f for f in features if f not in df.columns]
+def _validate_features(df, features):
+    missing = [feature for feature in features if feature not in df.columns]
     if missing:
         raise ValueError(f"Missing biomarker columns: {missing}")
 
+
+def fit_preprocessor(df, features):
+    """Fit median imputation and z-score scaling on one cohort."""
+    _validate_features(df, features)
     raw = df[features].apply(pd.to_numeric, errors="coerce")
+
     imputer = SimpleImputer(strategy="median")
     scaler = StandardScaler()
 
     imputed = imputer.fit_transform(raw)
-    standardized = scaler.fit_transform(imputed)
+    scaler.fit(imputed)
+    return imputer, scaler
+
+
+def transform_matrix(df, features, imputer, scaler):
+    """Apply an existing imputer and scaler without refitting them."""
+    _validate_features(df, features)
+    raw = df[features].apply(pd.to_numeric, errors="coerce")
+    imputed = imputer.transform(raw)
+    return scaler.transform(imputed)
+
+
+def prepare_matrix(df, features):
+    """Fit preprocessing on the supplied cohort and return its matrix."""
+    imputer, scaler = fit_preprocessor(df, features)
+    standardized = transform_matrix(df, features, imputer, scaler)
     return standardized, imputer, scaler
 
 
