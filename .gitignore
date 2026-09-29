@@ -7,7 +7,7 @@ env/
 .DS_Store
 .ipynb_checkpoints/
 
-# Local data and generated outputs
+# Private/local clinical data
 *.xlsx
 *.xls
 *.sav
@@ -15,3 +15,10 @@ env/
 *.rds
 *.pkl
 *.pickle
+
+# Generated analysis outputs
+results/*.csv
+results/*.tsv
+results/*.parquet
+results/figures/*
+!results/README.md
